@@ -1,0 +1,318 @@
+# docker exec -it addon_5c53de3b_esphome cp /config/esphome/mod/inkplate6/* /esphome/esphome/components/inkplate6/
+
+esphome:
+  name: esphome-web-a77904
+  friendly_name: Inkplate 6 a77904
+  includes: 
+    - esphome-web-a77904.hpp
+  on_boot:
+    then:
+      - pcf85063.read_time
+      - lambda: |-
+          customcode::boot();
+      
+esp32:
+  board: esp-wrover-kit
+
+# Enable logging
+logger:
+  level: info
+  #level: debug
+  #level: verbose
+  #level: very_verbose
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "nOP40waeR5y5CGfMtHFcEIKHq2IX7FMZZMs+oJJcQR0="
+  reboot_timeout: 1hours
+
+ota:
+
+
+wifi:
+  id: wifi_wifi
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esphome-Web-A77904"
+    password: "HKfYZlUE8gQt"
+
+captive_portal:
+
+i2c:
+
+json:
+
+http_request:
+
+substitutions:
+  quote: '"'
+  wifi_ssid: !secret wifi_ssid
+  wifi_password: !secret wifi_password
+  homepage: "https://deathbaron.org/"
+  # Qifi SSID/Password is not escaped (\;,:)
+  wifi_qifi: WIFI:S:${wifi_ssid};T:WPA;P:${wifi_password};;
+  hass_token: !secret hass_token
+
+globals:
+  - id: last_button_press
+    type: int
+    restore_value: no
+    initial_value: "0"
+  - id: wifi_ssid
+    type: std::string
+    restore_value: no
+    initial_value: ${quote}${wifi_ssid}${quote}
+  - id: wifi_password
+    type: std::string
+    restore_value: no
+    initial_value: ${quote}${wifi_password}${quote}
+  - id: homepage
+    type: std::string
+    restore_value: no
+    initial_value: ${quote}${homepage}${quote}
+  - id: hass_token
+    type: std::string
+    restore_value: no
+    initial_value: ${quote}${hass_token}${quote}
+  - id: hass_url
+    type: std::string
+    restore_value: no
+    initial_value: '"http://10.0.0.30/"'
+    #initial_value: '"https://hass.dyn.deathbaron.org/'
+  - id: calendar_entities
+    type: std::vector<std::string>
+    restore_value: no
+    initial_value: '{"calendar.calendar_o365", "calendar.kriszti_o365", "calendar.nevnap_o365", "calendar.szuletesnap_o365", "calendar.magyar_unnepnapok_o365"}'
+
+binary_sensor:
+  - platform: gpio
+    pin: 13
+    name: "Touch Pad"
+    filters:
+      - delayed_on_off: 200ms
+    on_press:
+      then:
+        - lambda: |-
+              id(last_button_press) = id(homeassistant_time).now().timestamp;
+        - display.page.show_next: inkplate_display
+        - component.update: inkplate_display
+
+sensor:
+  - platform: homeassistant
+    id: sensor_weather_now_temperature
+    entity_id: sensor.openweathermap_temperature
+  - platform: homeassistant
+    id: sensor_weather_now_code
+    entity_id: sensor.openweathermap_weather_code
+  - platform: homeassistant
+    id: sensor_weather_now_precipitation
+    entity_id: sensor.openweathermap_forecast_precipitation_probability
+  - platform: homeassistant
+    id: sensor_weather_daily_temperature_low
+    entity_id: sensor.openweathermapdaily_forecast_temperature_low
+  - platform: homeassistant
+    id: sensor_weather_daily_temperature_high
+    entity_id: sensor.openweathermapdaily_forecast_temperature
+  - platform: homeassistant
+    id: sensor_sun_elevation
+    entity_id: sun.sun
+    attribute: elevation
+
+text_sensor:
+  - platform: homeassistant
+    id: sensor_weather_now_condition
+    entity_id: sensor.openweathermap_condition
+  - platform: homeassistant
+    id: sensor_weather_now_text
+    entity_id: sensor.openweathermap_weather
+  - platform: homeassistant
+    id: sensor_weather_forecast_hourly
+    entity_id: weather.openweathermap
+    attribute: forecast
+  - platform: homeassistant
+    id: sensor_weather_forecast_daily
+    entity_id: weather.openweathermapdaily
+    attribute: forecast
+  - platform: homeassistant
+    id: sensor_tasks
+    entity_id: sensor.feladatok_o365
+    attribute: all_tasks
+  - platform: custom
+    lambda: |-
+      auto cal_sen = new customcode::MontlyCalendarEventsSensor();
+      App.register_component(cal_sen);
+      return {cal_sen};
+    text_sensors:
+      - id: calendar_sensor
+
+time:
+  - platform: pcf85063
+    id: pcf85063_time
+    # repeated synchronization is not necessary unless the external RTC is much more accurate than the internal clock
+    update_interval: never
+    timezone: Europe/Budapest
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: Europe/Budapest
+    # instead try to synchronize via network repeatedly ...
+    on_time_sync:
+      then:
+        # ... and update the RTC when the synchronization was successful
+        pcf85063.write_time:
+    on_time:
+      - cron: "00 /10 * * * *"
+        then:
+          if:
+            condition:
+              lambda: 'return 120 < (id(homeassistant_time).now().timestamp - id(last_button_press));'
+            then:
+              - logger.log: "Refreshing page..."
+              - display.page.show: page1
+              - component.update: inkplate_display
+            else:
+              - logger.log: "Skipping refresh due to recent manual page change."
+
+font:
+  - file: "fonts/verdana.ttf"
+    id: verdana_86
+    size: 86
+    glyphs: &extended_chars "!\"/%()[]{}+=,-_.:°0123456789AÁBCDEÉFGHIÍJKLMNOÓÖŐPQRSTUÚÜŰVWXYZ aábcdeéfghiíjklmnoóöőpqrstuúüűvwxyz"
+  - file: "fonts/verdana.ttf"
+    id: verdana_48
+    size: 48
+    glyphs: *extended_chars
+  - file: "fonts/verdana.ttf"
+    id: verdana_28
+    size: 28
+    glyphs: *extended_chars
+  - file: "fonts/verdana.ttf"
+    id: verdana_22
+    size: 22
+    glyphs: *extended_chars
+  - file: "fonts/verdanab.ttf"
+    id: verdanab_86
+    size: 86
+    glyphs: *extended_chars
+  - file: "fonts/verdanab.ttf"
+    id: verdanab_48
+    size: 48
+    glyphs: *extended_chars
+  - file: "fonts/verdanab.ttf"
+    id: verdanab_28
+    size: 28
+    glyphs: *extended_chars
+  - file: "fonts/verdanab.ttf"
+    id: verdanab_22
+    size: 22
+    glyphs: *extended_chars
+  - file: "fonts/verdanab.ttf"
+    id: verdanab_16
+    size: 16
+    glyphs: *extended_chars
+  - file: "fonts/verdanab.ttf"
+    id: verdanab_11
+    size: 11
+    glyphs: *extended_chars
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: weather_128
+    size: 128
+    glyphs: &mdi-weather-glyphs
+      - "\U000F1BF9" # mdi-cloud-question-outline
+      - "\U000F0590" # mdi-weather-cloudy
+      - "\U000F0F2F" # mdi-weather-cloudy-alert
+      - "\U000F0E6E" # mdi-weather-cloudy-arrow-right
+      - "\U000F0591" # mdi-weather-fog
+      - "\U000F0592" # mdi-weather-hail
+      - "\U000F0F30" # mdi-weather-hazy
+      - "\U000F0898" # mdi-weather-hurricane
+      - "\U000F0593" # mdi-weather-lightning
+      - "\U000F067E" # mdi-weather-lightning-rainy
+      - "\U000F0594" # mdi-weather-night
+      - "\U000F0F31" # mdi-weather-night-partly-cloudy
+      - "\U000F0595" # mdi-weather-partly-cloudy
+      - "\U000F0F32" # mdi-weather-partly-lightning
+      - "\U000F0F33" # mdi-weather-partly-rainy
+      - "\U000F0F34" # mdi-weather-partly-snowy
+      - "\U000F0F35" # mdi-weather-partly-snowy-rainy
+      - "\U000F0596" # mdi-weather-pouring
+      - "\U000F0597" # mdi-weather-rainy
+      - "\U000F0598" # mdi-weather-snowy
+      - "\U000F0F36" # mdi-weather-snowy-heavy
+      - "\U000F067F" # mdi-weather-snowy-rainy
+      - "\U000F0599" # mdi-weather-sunny
+      - "\U000F0F37" # mdi-weather-sunny-alert
+      - "\U000F14E4" # mdi-weather-sunny-off
+      - "\U000F059A" # mdi-weather-sunset
+      - "\U000F059B" # mdi-weather-sunset-down
+      - "\U000F059C" # mdi-weather-sunset-up
+      - "\U000F0F38" # mdi-weather-tornado
+      - "\U000F059D" # mdi-weather-windy
+      - "\U000F059E" # mdi-weather-windy-variant
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: weather_60
+    size: 60
+    glyphs: *mdi-weather-glyphs
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: weather_30
+    size: 30
+    glyphs: *mdi-weather-glyphs
+
+qr_code:
+  - id: wifi_qr
+    value: ${wifi_qifi}
+  - id: homepage_qr
+    value: ${homepage}
+
+pca6416a:
+  - id: pca6416a_hub
+    address: 0x20
+
+display:
+- platform: inkplate6
+  id: inkplate_display
+  greyscale: true
+  partial_updating: false
+  update_interval: never
+  model: inkplate_6_v2
+  rotation: 270
+
+  ckv_pin: 32
+  sph_pin: 33
+  gmod_pin:
+    pca6416a: pca6416a_hub
+    number: 1
+  gpio0_enable_pin:
+    pca6416a: pca6416a_hub
+    number: 8
+  oe_pin:
+    pca6416a: pca6416a_hub
+    number: 0
+  spv_pin:
+    pca6416a: pca6416a_hub
+    number: 2
+  powerup_pin:
+    pca6416a: pca6416a_hub
+    number: 4
+  wakeup_pin:
+    pca6416a: pca6416a_hub
+    number: 3
+  vcom_pin:
+    pca6416a: pca6416a_hub
+    number: 5
+  on_page_change:
+        then:
+          logger.log: "Changing page..."
+            
+  pages:
+      - id: page1
+        lambda: |-
+          customcode::render_page1(it);
+
+      - id: page2
+        lambda: |-
+          customcode::render_page2(it);
+
