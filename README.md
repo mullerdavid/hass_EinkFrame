@@ -3,14 +3,12 @@
 Eink Calendar and TODO list.
 Touch sensor to switch between pages.
 
-![image1](https://github.com/mullerdavid/hass_EinkFrame/blob/master/image1.png?raw=true)
-
-![image2](https://github.com/mullerdavid/hass_EinkFrame/blob/master/image2.png?raw=true)
-
 ## Hardware
 
 [Soldered Inkplate 6 (v2)](https://soldered.com/product/soldered-inkplate-6-6-e-paper-board/) was used. 
 The v2 does not have touchpad, so a TTP223 was added to the GPIO13 as input.
+
+[Images](#images)
 
 ## Software and Installation
 
@@ -37,3 +35,9 @@ Until the fixed PR gets into the release version, the fixed files have to be cop
 ### ESPHome
 
 Add the esphome-web-\*.yaml and esphome-web-\*hpp files to your instance/device. Modify the yaml and code accordingly to change settings, fonts or language.
+
+# Images
+
+![image1](https://github.com/mullerdavid/hass_EinkFrame/blob/master/image1.png?raw=true)
+
+![image2](https://github.com/mullerdavid/hass_EinkFrame/blob/master/image2.png?raw=true)
