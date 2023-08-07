@@ -3,7 +3,9 @@
 Eink Calendar and TODO list.
 Touch sensor to switch between pages.
 
-TODO: image link
+![image1](https://github.com/mullerdavid/hass_EinkFrame/blob/master/image1.png?raw=true)
+
+![image2](https://github.com/mullerdavid/hass_EinkFrame/blob/master/image2.png?raw=true)
 
 ## Hardware
 
