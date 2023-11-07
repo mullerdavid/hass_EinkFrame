@@ -25,12 +25,6 @@ For the fonts, [Verdana](https://learn.microsoft.com/en-us/typography/font-list/
 Generate a Long-Lived Access Token in Home Assistant and add it to the ESPHome secrets.yaml
 
 	hass_token: "<TOKEN STRING>" 
-
-### Inkplate v6 Fix
-
-Until the fixed PR gets into the release version, the fixed files have to be copied manually to the ESPHome before compilation.
-
-	docker exec -it addon_5c53de3b_esphome cp /path/to/fix/inkplate6/\* /esphome/esphome/components/inkplate6/
 	
 ### ESPHome
 
