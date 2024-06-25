@@ -59,7 +59,7 @@ public:
                     // entity can't contain special chars (HA ENTITY_ID_PATTERN)
                     std::string wrapper = "{\"" + entity + "\":" + this->client_.getString().c_str() + "}";
                     std::string output;
-                    esphome:json::parse_json(wrapper.c_str(), [&](JsonObject root) {
+                    esphome::json::parse_json(wrapper.c_str(), [&](JsonObject root) {
                         JsonArray events = root[entity.c_str()];
                         for (JsonObject event: events) {
                             for (JsonObject::iterator it=event.begin(); it!=event.end(); ++it) {
@@ -74,6 +74,7 @@ public:
                             }
                         }
                         serializeJson(root, output);
+                        return true;
                     });
                     if (2 < output.size()) {
                         //remove first and last {}
@@ -122,7 +123,7 @@ std::vector<CalendarEvent> extract_json_calendar_events() {
     std::vector<CalendarEvent> ret;
     std::string& calendar_json = id(calendar_sensor).state;
     if (1 < calendar_json.length()) {
-        esphome:json::parse_json(calendar_json.c_str(), [&](JsonObject root) {
+        esphome::json::parse_json(calendar_json.c_str(), [&](JsonObject root) {
             for (JsonPair cal : root) {
                 for (JsonObject event : cal.value().as<JsonArray>()) {
                     CalendarEvent add{};
@@ -147,6 +148,7 @@ std::vector<CalendarEvent> extract_json_calendar_events() {
                     ret.push_back(add);
                 }
             }
+            return true;
         });
     }
     std::sort(ret.begin(), ret.end(), [](CalendarEvent& a, CalendarEvent& b) { return a.start < b.start; });
@@ -158,7 +160,7 @@ std::vector<Forecast> extract_json_forecast(esphome::text_sensor::TextSensor& se
     std::string& forecast_json = sensor.state;
     std::string wrapper = "{\"d\":" + forecast_json + "}";
     if (1 < forecast_json.length()) {
-        esphome:json::parse_json(wrapper.c_str(), [&](JsonObject root) {
+        esphome::json::parse_json(wrapper.c_str(), [&](JsonObject root) {
             for (JsonObject fc : root["d"].as<JsonArray>()) {
                 Forecast add{};
                 if (fc.containsKey("datetime")) {
@@ -178,6 +180,7 @@ std::vector<Forecast> extract_json_forecast(esphome::text_sensor::TextSensor& se
                 }
                 ret.push_back(add);
             }
+            return true;
         });
     }
     std::sort(ret.begin(), ret.end(), [](Forecast& a, Forecast& b) { return a.time < b.time; });
@@ -189,12 +192,13 @@ std::vector<std::string> extract_json_tasks() {
     std::string& tasks_json = id(sensor_tasks).state;
     std::string wrapper = "{\"d\":" + tasks_json + "}";
     if (1 < tasks_json.length()) {
-        esphome:json::parse_json(wrapper.c_str(), [&](JsonObject root) {
+        esphome::json::parse_json(wrapper.c_str(), [&](JsonObject root) {
             for (JsonObject fc : root["d"].as<JsonArray>()) {
                 if (fc.containsKey("subject")) {
                     ret.push_back(fc["subject"].as<std::string>());
                 }
             }
+            return true;
         });
     }
     return ret;
