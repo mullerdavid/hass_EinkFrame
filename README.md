@@ -17,7 +17,7 @@ Home Assistant and ESPHome.
 ### Dependencies
 
 For the calendars and tasks, [O365 integration](https://github.com/RogerSelwyn/O365-HomeAssistant) was installed to HA.
-For the weather, the built-in [OpenWeatherMap integration](https://www.home-assistant.io/integrations/openweathermap/) was used. Added twice with daily and hourly forecast variants (just modify long/lat slightly to add multiple).
+For the weather, the built-in [OpenWeatherMap integration](https://www.home-assistant.io/integrations/openweathermap/) was used. 
 For the fonts, [Verdana](https://learn.microsoft.com/en-us/typography/font-list/verdana) and [Material Design Icons](https://github.com/google/material-design-icons) were used.
 
 ### HA Long-Lived Access Token
@@ -26,6 +26,10 @@ Generate a Long-Lived Access Token in Home Assistant and add it to the ESPHome s
 
 	hass_token: "<TOKEN STRING>" 
 	
+### Template sensor
+
+Add the template sensor to your `config.yaml`.
+
 ### ESPHome
 
 Add the esphome-web-\*.yaml and esphome-web-\*hpp files to your instance/device. Modify the yaml and code accordingly to change settings, fonts or language.
