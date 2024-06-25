@@ -16,9 +16,10 @@ esp32:
 
 # Enable logging
 logger:
-  level: debug
-  #level: very_verbose
+  level: info
+  #level: debug
   #level: verbose
+  #level: very_verbose
 
 # Enable Home Assistant API
 api:
@@ -27,6 +28,7 @@ api:
   reboot_timeout: 1hours
 
 ota:
+  platform: esphome
 
 
 wifi:
@@ -46,6 +48,7 @@ i2c:
 json:
 
 http_request:
+  verify_ssl: false
 
 substitutions:
   quote: '"'
