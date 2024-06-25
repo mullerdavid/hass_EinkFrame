@@ -1,0 +1,28 @@
+# Template sensors
+template:
+  - trigger:
+      - platform: time_pattern
+        hours: /1
+        minutes: /2
+    action:
+      - service: weather.get_forecasts
+        data:
+          type: hourly
+        target:
+          entity_id: weather.openweathermap
+        response_variable: hourly
+      - service: weather.get_forecasts
+        data:
+          type: daily
+        target:
+          entity_id: weather.openweathermap
+        response_variable: daily
+    sensor:
+      - name: Weather Forecast
+        unique_id: weather_forecast
+        state: "{{ hourly['weather.openweathermap'].forecast[0].condition }}"
+        attributes:
+          last_update: "{{ now().isoformat() }}"
+          forecast_hourly: "{{ hourly['weather.openweathermap'].forecast }}"
+          forecast_daily: "{{ daily['weather.openweathermap'].forecast }}"
+          

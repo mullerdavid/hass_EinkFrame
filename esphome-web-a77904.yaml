@@ -1,5 +1,3 @@
-# docker exec -it addon_5c53de3b_esphome cp /config/esphome/mod/inkplate6/* /esphome/esphome/components/inkplate6/
-
 esphome:
   name: esphome-web-a77904
   friendly_name: Inkplate 6 a77904
@@ -133,12 +131,12 @@ text_sensor:
     entity_id: sensor.openweathermap_weather
   - platform: homeassistant
     id: sensor_weather_forecast_hourly
-    entity_id: weather.openweathermap
-    attribute: forecast
+    entity_id: sensor.weather_forecast
+    attribute: forecast_hourly
   - platform: homeassistant
     id: sensor_weather_forecast_daily
-    entity_id: weather.openweathermapdaily
-    attribute: forecast
+    entity_id: sensor.weather_forecast
+    attribute: forecast_daily
   - platform: homeassistant
     id: sensor_tasks
     entity_id: sensor.feladatok_o365
