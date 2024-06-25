@@ -20,19 +20,20 @@ For the calendars and tasks, [O365 integration](https://github.com/RogerSelwyn/O
 For the weather, the built-in [OpenWeatherMap integration](https://www.home-assistant.io/integrations/openweathermap/) was used. 
 For the fonts, [Verdana](https://learn.microsoft.com/en-us/typography/font-list/verdana) and [Material Design Icons](https://github.com/google/material-design-icons) were used.
 
-### HA Long-Lived Access Token
+### Secrets
 
-Generate a Long-Lived Access Token in Home Assistant and add it to the ESPHome secrets.yaml
+Add your wifi credentials to the `secrets.yaml`.
 
-	hass_token: "<TOKEN STRING>" 
+	wifi_ssid: "wifi ssid"
+	wifi_password: "wifi password"
 	
 ### Template sensor
 
-Add the template sensor to your `config.yaml`.
+Add the template sensors to your `config.yaml`.
 
 ### ESPHome
 
-Add the esphome-web-\*.yaml and esphome-web-\*hpp files to your instance/device. Modify the yaml and code accordingly to change settings, fonts or language.
+Add the `esphome-web-*.yaml` and `esphome-web-*.hpp` files to your instance/device. Modify the yaml and code accordingly to change settings, fonts or language.
 
 # Images
 

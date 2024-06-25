@@ -23,86 +23,6 @@ std::vector<std::time_t> helper_calendar_range(const std::tm& in, bool fullrange
 std::string strftime(const char* format, const std::time_t& t, bool gmt=false);
 time_t parse_iso_date_to_local(const char* str);
 
-class MontlyCalendarEventsSensor : public PollingComponent, public TextSensor  {
-protected:
-    HTTPClient client_;
-    std::string host_;
-public:
-    MontlyCalendarEventsSensor() : PollingComponent(120000) {} //update every 2 minutes
-    float get_setup_priority() const override { return esphome::setup_priority::AFTER_WIFI; }
-    void setup() override {
-    this->host_ = id(hass_url).c_str();
-    this->client_.setReuse(false);
-    this->client_.setTimeout(2000);
-    this->client_.setAuthorizationType("Bearer");
-    this->client_.setAuthorization(id(hass_token).c_str());
-    this->client_.begin(this->host_.c_str());
-    this->set_component_source("calendar_sensor");
-    }
-    void update() override {
-        static const std::string path_prefix = "/api/calendars/";
-        std::string new_state = "{";
-        std::tm* now = time_tm();
-        std::vector<std::time_t> elements = helper_calendar_range(*now);
-        if (elements.size()==2)
-        {
-            const char* fmt = "%FT%T.000Z";
-            std::string start = strftime(fmt, elements[0], true);
-            std::string end = strftime(fmt, elements[1], true);
-            bool hasitem = false;
-
-            for (auto entity: id(calendar_entities)) {
-                std::string url = path_prefix + entity + "?start=" + start + "&end=" + end;
-                this->client_.setURL(url.c_str());
-                int code = this->client_.GET();
-                if (200 <= code && code < 300) {
-                    // entity can't contain special chars (HA ENTITY_ID_PATTERN)
-                    std::string wrapper = "{\"" + entity + "\":" + this->client_.getString().c_str() + "}";
-                    std::string output;
-                    esphome::json::parse_json(wrapper.c_str(), [&](JsonObject root) {
-                        JsonArray events = root[entity.c_str()];
-                        for (JsonObject event: events) {
-                            for (JsonObject::iterator it=event.begin(); it!=event.end(); ++it) {
-                                if (
-                                    it->key() != "start" &&
-                                    it->key() != "end" &&
-                                    it->key() != "summary" &&
-                                    it->key() != "location"
-                                    ) {
-                                    event.remove(it);
-                                }
-                            }
-                        }
-                        serializeJson(root, output);
-                        return true;
-                    });
-                    if (2 < output.size()) {
-                        //remove first and last {}
-                        output.erase(0,1);
-                        output.erase(output.length()-1,1);
-                        if (hasitem) {
-                            new_state += ",";
-                        } else {
-                            hasitem = true;
-                        }
-                        new_state += output;
-                    }
-                } else {
-                    ESP_LOGW(TAG, "HTTP Request failed: %s", HTTPClient::errorToString(code).c_str());
-                    return;
-                }
-            }
-
-            new_state += "}";
-            if (5<new_state.length() && this->raw_state != new_state) {
-                this->publish_state(new_state);
-            }
-        } else {
-            ESP_LOGE(TAG, "MontlyCalendarEventsSensor: start and end missing.");
-        }
-    }
-};
-
 struct CalendarEvent {
     std::time_t start;
     std::time_t end;
@@ -121,26 +41,17 @@ struct Forecast {
 
 std::vector<CalendarEvent> extract_json_calendar_events() {
     std::vector<CalendarEvent> ret;
-    std::string& calendar_json = id(calendar_sensor).state;
+    std::string& calendar_json = id(sensor_calendar).state;
     if (1 < calendar_json.length()) {
         esphome::json::parse_json(calendar_json.c_str(), [&](JsonObject root) {
             for (JsonPair cal : root) {
-                for (JsonObject event : cal.value().as<JsonArray>()) {
+                for (JsonObject event : cal.value()["events"].as<JsonArray>()) {
                     CalendarEvent add{};
-                    JsonObject start = event["start"];
-                    if (start.containsKey("date")) {
-                        add.is_all_day = true;
-                        add.start = parse_iso_date_to_local(start["date"]);
-                    } else if (start.containsKey("dateTime")) {
-                        add.is_all_day = false;
-                        add.start = parse_iso_date_to_local(start["dateTime"]);
-                    }
-                    JsonObject end = event["end"];
-                    if (end.containsKey("date")) {
-                        add.end = parse_iso_date_to_local(end["date"]);
-                    } else if (end.containsKey("dateTime")) {
-                        add.end = parse_iso_date_to_local(end["dateTime"]);
-                    }
+                    const char* start = event["start"];
+                    const char* end = event["end"];
+                    add.is_all_day = strlen(start) <= 10;
+                    add.start = parse_iso_date_to_local(start);
+                    add.end = parse_iso_date_to_local(end);
                     add.summary = event["summary"].as<std::string>();
                     if (event.containsKey("location")) {
                         add.location = event["location"].as<std::string>();

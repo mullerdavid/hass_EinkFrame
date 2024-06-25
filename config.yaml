@@ -25,4 +25,26 @@ template:
           last_update: "{{ now().isoformat() }}"
           forecast_hourly: "{{ hourly['weather.openweathermap'].forecast }}"
           forecast_daily: "{{ daily['weather.openweathermap'].forecast }}"
-          
+  - trigger:
+      - platform: time_pattern
+        hours: /1
+        minutes: /5
+    action:
+      - service: calendar.get_events
+        data:
+          start_date_time: "{% set mfirst = now().date().replace(day=1) %}{{ mfirst - timedelta(days=mfirst.weekday()+1) }}"
+          end_date_time: "{% set mfirst = now().date().replace(day=1) %}{{ mfirst - timedelta(days=mfirst.weekday()-1) + timedelta(weeks=6) }}"
+        target:
+          entity_id:
+            - calendar.calendar_o365
+            - calendar.kriszti_o365
+            - calendar.nevnap_o365
+            - calendar.szuletesnap_o365
+            - calendar.magyar_unnepnapok_o365
+        response_variable: calendars
+    sensor:
+      - name: Calendar Events This Month
+        unique_id: calendar_events_this_month
+        state: "{{ now().isoformat() }}"
+        attributes:
+          calendars: "{{ calendars }}"

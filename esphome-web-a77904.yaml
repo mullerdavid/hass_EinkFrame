@@ -45,9 +45,6 @@ i2c:
 
 json:
 
-http_request:
-  verify_ssl: false
-
 substitutions:
   quote: '"'
   wifi_ssid: !secret wifi_ssid
@@ -74,19 +71,6 @@ globals:
     type: std::string
     restore_value: no
     initial_value: ${quote}${homepage}${quote}
-  - id: hass_token
-    type: std::string
-    restore_value: no
-    initial_value: ${quote}${hass_token}${quote}
-  - id: hass_url
-    type: std::string
-    restore_value: no
-    initial_value: '"http://10.0.0.30/"'
-    #initial_value: '"https://hass.dyn.deathbaron.org/'
-  - id: calendar_entities
-    type: std::vector<std::string>
-    restore_value: no
-    initial_value: '{"calendar.calendar_o365", "calendar.kriszti_o365", "calendar.nevnap_o365", "calendar.szuletesnap_o365", "calendar.magyar_unnepnapok_o365"}'
 
 binary_sensor:
   - platform: gpio
@@ -141,13 +125,10 @@ text_sensor:
     id: sensor_tasks
     entity_id: sensor.feladatok_o365
     attribute: all_tasks
-  - platform: custom
-    lambda: |-
-      auto cal_sen = new customcode::MontlyCalendarEventsSensor();
-      App.register_component(cal_sen);
-      return {cal_sen};
-    text_sensors:
-      - id: calendar_sensor
+  - platform: homeassistant
+    id: sensor_calendar
+    entity_id: sensor.calendar_events_this_month
+    attribute: calendars
 
 time:
   - platform: pcf85063
