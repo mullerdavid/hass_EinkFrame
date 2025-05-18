@@ -25,6 +25,8 @@ template:
           last_update: "{{ now().isoformat() }}"
           forecast_hourly: "{{ hourly['weather.openweathermap'].forecast }}"
           forecast_daily: "{{ daily['weather.openweathermap'].forecast }}"
+          forecast_templow: "{{ daily['weather.openweathermap'].forecast[0].templow|float }}"
+          forecast_temphigh: "{{ daily['weather.openweathermap'].forecast[0].temperature|float }}"
   - trigger:
       - platform: time_pattern
         hours: /1
