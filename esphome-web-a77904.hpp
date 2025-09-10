@@ -660,8 +660,13 @@ void render_page2(esphome::display::Display& it) {
 }
 
 void boot() {
+    esp_task_wdt_config_t wdt_config = {
+        .timeout_ms = 30000,
+        .idle_core_mask = 0,
+        .trigger_panic = false
+    };
     ESP_LOGD(TAG, "Free RAM heap size (all / psram): %d / %d.", heap_caps_get_free_size(MALLOC_CAP_8BIT), heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-    esp_task_wdt_init(30, false);
+    esp_task_wdt_init(&wdt_config);
 }
 
 }  // namespace customcode
